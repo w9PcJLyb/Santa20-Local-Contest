@@ -5,15 +5,15 @@ Django leaderboard for Santa 2020, https://www.kaggle.com/c/santa-2020/overview
 
 - Create your own leaderboard with django
 
-![agents](https://github.com/w9PcJLyb/Santa20-Local-Contest/assets/agents.png)
+![agents](https://github.com/w9PcJLyb/Santa20-Local-Contest/blob/main/assets/agents.png)
 
 - Detail statistics for each agent
 
-![agents](https://github.com/w9PcJLyb/Santa20-Local-Contest/assets/agent.png)
+![agents](https://github.com/w9PcJLyb/Santa20-Local-Contest/blob/main/assets/agent.png)
 
 - Each game is stored in a database, and you can watch them at any time
 
-![game](https://github.com/w9PcJLyb/Santa20-Local-Contest/assets/game.png)
+![game](https://github.com/w9PcJLyb/Santa20-Local-Contest/blob/main/assets/game.png)
 
 - Add your own custom metrics for agent and match analysis
 
