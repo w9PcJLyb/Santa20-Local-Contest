@@ -1,0 +1,9 @@
+django==3.1.4
+django-ndarray==0.0.3
+kaggle_environments==1.7.3
+requests==2.25.0
+pandas==1.1.5
+matplotlib==3.3.3
+numpy==1.19.4
+scipy==1.5.4
+psycopg2-binary==2.8.6
