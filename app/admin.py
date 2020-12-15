@@ -11,7 +11,14 @@ from app.models import Agent, Game, GameResult
 
 class AgentAdmin(admin.ModelAdmin):
     list_display = ("name", "rating", "created_at")
-    readonly_fields = ("id", "created_at", "num_games", "elo_rating", "statistics")
+    readonly_fields = (
+        "id",
+        "created_at",
+        "num_games",
+        "elo_rating",
+        "statistics",
+        "last_games",
+    )
     fields = (
         "id",
         "name",
@@ -21,6 +28,7 @@ class AgentAdmin(admin.ModelAdmin):
         "num_games",
         "elo_rating",
         "statistics",
+        "last_games",
     )
 
     @staticmethod
@@ -114,6 +122,62 @@ class AgentAdmin(admin.ModelAdmin):
             )
         )
 
+    @staticmethod
+    def last_games(obj, num_games=50):
+        data = []
+        for g in (
+            obj.games_qs()
+            .order_by("-started")[:num_games]
+            .values(
+                "id",
+                "started",
+                "right_agent",
+                "right_agent__name",
+                "right_new_rating",
+                "right_current_rating",
+                "left_agent",
+                "left_agent__name",
+                "left_new_rating",
+                "left_current_rating",
+            )
+        ):
+            if g["left_agent"] == obj.id:
+                opponent_name = g["right_agent__name"]
+                opponent_score = g["right_current_rating"]
+                new_rating = g["left_new_rating"]
+                old_rating = g["left_current_rating"]
+            elif g["right_agent"] == obj.id:
+                opponent_name = g["left_agent__name"]
+                opponent_score = g["left_current_rating"]
+                new_rating = g["right_new_rating"]
+                old_rating = g["right_current_rating"]
+            else:
+                continue
+
+            if new_rating is None or old_rating is None:
+                rating_change = "-"
+            else:
+                rating_change = new_rating - old_rating
+                if rating_change > 0:
+                    rating_change = (
+                        f"<span style='color: green'>+{round(rating_change, 1)}</span>"
+                    )
+                else:
+                    rating_change = f"<span style='color: red'>-{round(abs(rating_change), 1)}</span>"
+
+            data.append(
+                {
+                    "result": rating_change,
+                    "name": opponent_name,
+                    "rating": int(opponent_score),
+                    "date": g["started"].strftime("%Y-%m-%d %H:%M"),
+                    "url": f"<a href=/admin/app/game/{g['id']}>url</a>",
+                }
+            )
+
+        df = pd.DataFrame(data)
+        return mark_safe(df.to_html(index=False, border=0, escape=False))
+
 
 class GameAdmin(admin.ModelAdmin):
     readonly_fields = (
@@ -126,6 +190,13 @@ class GameAdmin(admin.ModelAdmin):
         "expected_rewards",
         "rewards_over_time",
         "threshold_distribution",
+    )
+    list_filter = (
+        "left_agent__name",
+        "right_agent__name",
+        "status",
+        "result",
+        "started",
     )
     list_display = ("id", "left_agent", "right_agent", "started", "status", "result")
     fields = (

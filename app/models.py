@@ -95,8 +95,8 @@ class Game(models.Model):
         for i, (la, ra) in enumerate(zip(self.left_actions, self.right_actions)):
             l_expected[i] = th[la]
             r_expected[i] = th[ra]
-            th[la] *= 0.97
-            th[ra] *= 0.97
+            th[la] *= DECAY_RATE
+            th[ra] *= DECAY_RATE
         return l_expected / SAMPLE_RESOLUTION, r_expected / SAMPLE_RESOLUTION
 
     def total_expected_rewards(self):
@@ -106,7 +106,7 @@ class Game(models.Model):
     def thresholds_at_the_end(self):
         th = np.array(self.initial_thresholds, dtype="float32")
         for i in self.left_actions:
-            th[i] *= 0.97
+            th[i] *= DECAY_RATE
         for i in self.right_actions:
-            th[i] *= 0.97
+            th[i] *= DECAY_RATE
         return th
