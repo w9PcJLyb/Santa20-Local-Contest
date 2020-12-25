@@ -20,7 +20,7 @@ Django leaderboard for Santa 2020, https://www.kaggle.com/c/santa-2020/overview
 ### Installation:
 
 1. Clone this repo
-2. Create virtual environment
+2. Create a virtual environment
 3. Install dependencies:
    ```bash
    pip install -r requirements.txt
@@ -29,7 +29,7 @@ Django leaderboard for Santa 2020, https://www.kaggle.com/c/santa-2020/overview
    ```bash
    ./manage.py migrate
    ```
-5. Create superuser:
+5. Create a superuser:
    ```bash
    ./manage.py createsuperuser
    ```
@@ -46,4 +46,4 @@ Django leaderboard for Santa 2020, https://www.kaggle.com/c/santa-2020/overview
    ```bash
    ./manage.py run_games -n 100
    ```
-3. You can find your local LB here http://127.0.0.1:8000/admin/app/agent/?o=-2
+3. You can find your local LB here http://127.0.0.1:8000/admin/app/agent/
