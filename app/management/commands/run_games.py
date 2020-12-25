@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from kaggle_environments import make
 from django.utils import timezone
@@ -14,17 +15,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         num_games = options["num_games"]
-        agent_id_list = list(
-            Agent.objects.filter(file__isnull=False).values_list("id", flat=True)
-        )
-        if len(agent_id_list) < 2:
-            self.stdout.write(self.style.ERROR("There must be at least 2 agents."))
-            return
 
         c = 1
         env = make("mab", debug=True)
         while c <= num_games:
-            left_agent_id, right_agent_id = choice_agents_for_game(agent_id_list)
+            left_agent_id, right_agent_id = choice_agents_for_game()
 
             try:
                 game = run_game(env, left_agent_id, right_agent_id)
@@ -32,12 +27,59 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(e))
                 return
 
-            self.stdout.write(f"{c} - {game}")
+            self.stdout.write(f"{c}/{num_games} - {game}")
             c += 1
 
 
-def choice_agents_for_game(agent_id_list):
-    return np.random.choice(agent_id_list, size=2, replace=False)
+def choice_agents_for_game():
+    __set_random_seed()
+
+    agent_to_rating = dict(
+        Agent.objects.filter(file__isnull=False, enabled=True).values_list(
+            "id", "rating"
+        )
+    )
+    if len(agent_to_rating) < 2:
+        raise ValueError("There must be at least 2 agents.")
+
+    a1 = __choice_first_agent(agent_to_rating)
+
+    others = {i: r for i, r in agent_to_rating.items() if i != a1}
+    a2 = __choice_second_agent(others, agent_to_rating[a1])
+
+    out = [a1, a2]
+    np.random.shuffle(out)
+    return out
+
+
+def __choice_first_agent(agent_to_rating):
+    # high scoring agents are preferred
+    agents = sorted(agent_to_rating, key=lambda x: agent_to_rating[x])
+    probability = [i for i, _ in enumerate(agents, start=1)]
+    n = sum(probability)
+    probability = [p / n for p in probability]
+    return np.random.choice(agents, p=probability)
+
+
+def __choice_second_agent(agent_to_rating, target_rating):
+    # agents with a rating near the target are preferred
+    std = np.std(list(agent_to_rating.values()))
+
+    if not std:
+        return np.random.choice(list(agent_to_rating.keys()))
+
+    def p(x):
+        return np.exp(-(x - target_rating) ** 2 / (2 * std ** 2))
+
+    agents, probability = zip(*[(i, p(r)) for i, r in agent_to_rating.items()])
+
+    n = sum(probability)
+    probability = [p / n for p in probability]
+    return np.random.choice(agents, p=probability)
+
+
+def __set_random_seed():
+    np.random.seed(int(time.time() * 100) % 2 ** 32)
 
 
 def run_game(env, left_agent_id, right_agent_id):
