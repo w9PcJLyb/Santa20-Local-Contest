@@ -40,6 +40,7 @@ class AgentAdmin(admin.ModelAdmin):
         "statistics",
         "last_games",
     )
+    ordering = ("-rating",)
 
     @staticmethod
     def elo_rating(obj):
