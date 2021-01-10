@@ -297,6 +297,9 @@ class GameAdmin(admin.ModelAdmin):
 
     @staticmethod
     def threshold_distribution(obj):
+        if obj.initial_thresholds is None:
+            return "-"
+
         fig, ax = plt.subplots(1, 2, figsize=(8, 4))
 
         ax[0].hist(obj.initial_thresholds, bins=20, range=(0, 100), color="gray")

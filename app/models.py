@@ -97,10 +97,20 @@ class Game(models.Model):
         return self.finished - self.started
 
     def total_rewards(self):
-        return self.left_rewards[-1], self.right_rewards[-1]
+        lr = self.left_rewards[-1] if self.left_rewards is not None else 0
+        rr = self.right_rewards[-1] if self.right_rewards is not None else 0
+        return lr, rr
 
     @cached_property
     def steps(self):
+        if (
+            self.initial_thresholds is None
+            or self.left_actions is None
+            or self.right_actions is None
+            or self.left_rewards is None
+            or self.right_rewards is None
+        ):
+            return []
         th = np.array(self.initial_thresholds, dtype="float32")
         total_left_reward, total_right_reward = 0, 0
         data = []
