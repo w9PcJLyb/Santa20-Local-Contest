@@ -9,6 +9,15 @@ def visualization_view(request, object_id):
     if not game:
         return HttpResponse(f"Can't find game with id {object_id}.")
 
+    if (
+        game.initial_thresholds is None
+        or game.left_actions is None
+        or game.right_actions is None
+        or game.left_rewards is None
+        or game.right_rewards is None
+    ):
+        return HttpResponse("Can't create a video.")
+
     fig, ax = plt.subplots(2, 2, figsize=(15, 8), gridspec_kw={"width_ratios": [3, 1]})
 
     th_animation = ThresholdsAnimation(ax[0, 0], game)
@@ -195,38 +204,52 @@ class BanditRewardsAnimation(AnimationABC):
         ax.set_ylim(
             0,
             max(
-                self.bandit_distribution[-1]["left_reward_count"]
-                + self.bandit_distribution[-1]["right_reward_count"]
+                self.bandit_distribution[-1]["left_action_count"]
+                + self.bandit_distribution[-1]["right_action_count"]
             ),
         )
-        left_turns = ax.bar(
+        left_rewards = ax.bar(
             range(self.num_bandits),
             [0] * self.num_bandits,
             color=self.left_color,
             alpha=0.5,
         )
-        right_turns = ax.bar(
+        right_rewards = ax.bar(
             range(self.num_bandits),
             [0] * self.num_bandits,
             color=self.right_color,
             alpha=0.5,
         )
-        return left_turns, right_turns
+        left_turns = ax.bar(
+            range(self.num_bandits),
+            [0] * self.num_bandits,
+            color=self.left_color,
+            linewidth=0,
+            alpha=0.2,
+            width=1,
+        )
+        right_turns = ax.bar(
+            range(self.num_bandits),
+            [0] * self.num_bandits,
+            color=self.right_color,
+            linewidth=0,
+            alpha=0.2,
+            width=1,
+        )
+        return left_rewards, right_rewards, left_turns, right_turns
 
     def animate(self, step):
-        left_turns, right_turns = self.plot_objects
+        left_rewards, right_rewards, left_turns, right_turns = self.plot_objects
         bd = self.bandit_distribution[step]
 
-        for lp, rp, la, ra, lr, rr in zip(
-            left_turns.patches,
-            right_turns.patches,
-            bd["left_action_count"],
-            bd["right_action_count"],
-            bd["left_reward_count"],
-            bd["right_reward_count"],
-        ):
-            lp.set_height(lr)
-            rp.set_height(rr)
+        for patches, data in [
+            (left_rewards.patches, bd["left_reward_count"]),
+            (right_rewards.patches, bd["right_reward_count"]),
+            (left_turns.patches, bd["left_action_count"]),
+            (right_turns.patches, bd["right_action_count"]),
+        ]:
+            for p, d in zip(patches, data):
+                p.set_height(d)
 
         return ()
 
